@@ -1,0 +1,7 @@
+# Atelier Price Action — support pédagogique visuel
+# L'atelier est autonome : il ne dépend que de Qt pour le rendu.
+PySide6>=6.6.0
+
+# Développement (tests, audit de mise en page, rendu PNG)
+pytest>=8.0.0
+ruff>=0.6.0
