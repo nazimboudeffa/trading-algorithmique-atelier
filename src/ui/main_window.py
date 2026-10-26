@@ -1,15 +1,5 @@
 """
 Fenêtre principale de l'atelier Price Action.
-
-Deux onglets, une seule idée : comprendre le Price Action, puis le lire sur
-des cours réels.
-
-    Leçons   les principes expliqués en trois temps, sur des schémas synthétiques
-    Analyse  les mêmes principes appliqués aux paires que vous suivez
-
-La fenêtre des leçons est celle qui existait, reprise telle quelle. L'onglet
-d'analyse est nouveau, et il partage son canevas avec les leçons — c'est
-délibéré : on doit reconnaître les annotations d'un écran à l'autre.
 """
 from __future__ import annotations
 
@@ -27,7 +17,6 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QPushButton,
     QSplitter,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -36,8 +25,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from core.theme import MUTED, TEXT  # noqa: E402
 from lessons import LESSONS  # noqa: E402
-from market import pairs as mp  # noqa: E402
-from ui.analysis_tab import AnalysisTab  # noqa: E402
 from ui.lesson_panel import LessonPanel  # noqa: E402
 
 
@@ -108,59 +95,30 @@ class LessonsPage(QWidget):
 
 
 class MainWindow(QMainWindow):
-    """Les deux onglets, et les raccourcis qui traversent les deux."""
+    """Fenêtre de l'atelier Price Action."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Price Action — atelier visuel et analyse")
+        self.setWindowTitle("Price Action — atelier visuel")
         self.resize(1440, 880)
 
-        central = QWidget()
-        root = QVBoxLayout(central)
-        root.setContentsMargins(10, 10, 10, 8)
-        root.setSpacing(8)
-
-        self.tabs = QTabWidget()
         self.lessons = LessonsPage()
-        self.analysis = AnalysisTab()
-        self.tabs.addTab(self.lessons, "Leçons")
-        self.analysis_index = self.tabs.addTab(self.analysis, self._analysis_title())
-        root.addWidget(self.tabs, 1)
-        self.setCentralWidget(central)
+        self.setCentralWidget(self.lessons)
 
         self._bind_shortcuts()
-        # le titre suit l'unité affichée : un onglet écrit « Analyse daily » qui
-        # montrerait du H1 mentirait sur son contenu
-        self.analysis.timeframe_changed.connect(self._retitle_analysis)
-        self.analysis.set_selection(mp.load_selection())
-
-    def _analysis_title(self) -> str:
-        return f"Analyse {self.analysis._timeframe_label()}"
-
-    def _retitle_analysis(self, label: str) -> None:
-        self.tabs.setTabText(self.analysis_index, f"Analyse {label}")
 
     def _bind_shortcuts(self) -> None:
         bindings = (
-            ("Left", lambda: self._act("go_step", -1)),
-            ("Right", lambda: self._act("go_step", 1)),
-            ("Up", lambda: self._act("move", -1)),
-            ("Down", lambda: self._act("move", 1)),
+            ("Left", lambda: self.lessons.go_step(-1)),
+            ("Right", lambda: self.lessons.go_step(1)),
+            ("Up", lambda: self.lessons.move(-1)),
+            ("Down", lambda: self.lessons.move(1)),
         )
         for seq, fn in bindings:
             act = QAction(self)
             act.setShortcut(seq)
             act.triggered.connect(fn)
             self.addAction(act)
-
-    def _act(self, name: str, delta: int) -> None:
-        """Raccourci dirigé vers l'onglet actif."""
-        if self.tabs.currentIndex() == 0:
-            getattr(self.lessons, name)(delta)
-        else:
-            if name == "go_step":
-                self.analysis.step(delta)
-            # pas de navigation par leçon dans l'onglet d'analyse
 
 
 def main() -> int:
